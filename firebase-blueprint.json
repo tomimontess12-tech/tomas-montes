@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Field": {
+      "title": "Cancha",
+      "description": "Una cancha deportiva disponible para reserva.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nombre de la cancha" },
+        "type": { "type": "string", "enum": ["Fútbol", "Pádel", "Tenis", "Básquet"], "description": "Tipo de deporte" },
+        "pricePerHour": { "type": "number", "description": "Precio por hora" },
+        "imageUrl": { "type": "string", "description": "URL de la imagen representativa" },
+        "description": { "type": "string", "description": "Detalles adicionales" }
+      },
+      "required": ["name", "type", "pricePerHour"]
+    },
+    "Reservation": {
+      "title": "Reserva",
+      "description": "Una reserva realizada por un usuario para una cancha.",
+      "type": "object",
+      "properties": {
+        "fieldId": { "type": "string", "description": "ID de la cancha" },
+        "userId": { "type": "string", "description": "ID del usuario que reserva" },
+        "userEmail": { "type": "string", "description": "Email del usuario" },
+        "userName": { "type": "string", "description": "Nombre del usuario" },
+        "startTime": { "type": "string", "format": "date-time", "description": "Fecha y hora de inicio" },
+        "endTime": { "type": "string", "format": "date-time", "description": "Fecha y hora de fin" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"], "description": "Estado de la reserva" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Fecha de creación" }
+      },
+      "required": ["fieldId", "userId", "startTime", "endTime", "status", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "Perfil de Usuario",
+      "description": "Información extendida del usuario.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["email", "displayName"]
+    }
+  },
+  "firestore": {
+    "fields": {
+      "schema": "Field",
+      "description": "Colección de canchas deportivas."
+    },
+    "reservations": {
+      "schema": "Reservation",
+      "description": "Colección de reservas de canchas."
+    },
+    "users": {
+      "schema": "UserProfile",
+      "description": "Colección de perfiles de usuario."
+    }
+  }
+}

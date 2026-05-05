@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Fields ---
+    match /fields/{fieldId} {
+      // Anyone can see the fields
+      allow read: if true;
+      
+      // For this demo/setup, we allow creation if signed in (to seed data)
+      // In a real app, this would be isAdmin()
+      allow create: if isSignedIn() && isValidField(request.resource.data);
+      allow update: if isSignedIn() && isValidField(request.resource.data);
+      allow delete: if isSignedIn();
+    }
+
+    function isValidField(data) {
+      return data.keys().hasAll(['name', 'type', 'pricePerHour'])
+        && data.name is string && data.name.size() <= 100
+        && data.type is string && data.type in ['Fútbol', 'Pádel', 'Tenis', 'Básquet']
+        && data.pricePerHour is number && data.pricePerHour >= 0;
+    }
+
+    // --- Reservations ---
+    match /reservations/{reservationId} {
+      // List/Get only if it's yours
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && isValidReservation(request.resource.data);
+      
+      allow update: if isSignedIn() 
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && isValidReservation(request.resource.data);
+
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isValidReservation(data) {
+      return data.keys().hasAll(['fieldId', 'userId', 'startTime', 'endTime', 'status', 'createdAt'])
+        && data.fieldId is string
+        && data.userId == request.auth.uid
+        && data.status in ['pending', 'confirmed', 'cancelled']
+        && data.startTime is timestamp
+        && data.endTime is timestamp
+        && data.createdAt == request.time;
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}
